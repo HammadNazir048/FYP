@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         APACHE_WEB_DIR = '/var/www/html/'  // Apache's document root
-        AZURE_SERVER_IP = '20.118.206.34'  // Apache server IP
+        AZURE_SERVER_IP = '52.165.82.190'  // Apache server IP
         SSH_CREDENTIALS_ID = 'azure-ssh-key'  // Replace with your Jenkins SSH credentials ID
         LOCAL_HTML_FILE = 'index.html'  // Path to your local HTML file
     }
