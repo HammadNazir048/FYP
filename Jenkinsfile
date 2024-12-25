@@ -25,16 +25,19 @@ pipeline {
                     echo 'Contents of index.html:'
                     sh 'cat index.html'
 
+                    // Debug: Check current working directory to ensure correct file is being copied
+                    echo "Current working directory: ${pwd()}"
+
                     // Copy index.html to the Apache server
                     sshagent(credentials: [SSH_CREDENTIALS_ID]) {
                         sh """
-                            # Debug: Verify the remote Apache directory
+                            # Verify the remote Apache directory and check if it's correct
                             ssh azureuser@$AZURE_SERVER_IP 'echo "Remote Apache directory: $APACHE_WEB_DIR"'
 
                             # Copy index.html to Apache server
                             scp $LOCAL_HTML_FILE azureuser@$AZURE_SERVER_IP:$APACHE_WEB_DIR
 
-                            # Debug: List files in the Apache directory to confirm the file copy
+                            # List files in the Apache directory to confirm the file copy
                             ssh azureuser@$AZURE_SERVER_IP 'ls -l $APACHE_WEB_DIR'
                         """
                     }
@@ -45,7 +48,7 @@ pipeline {
         stage('Set Permissions') {
             steps {
                 script {
-                    // Set correct permissions on the index.html file
+                    // Set correct permissions on the index.html file to ensure Apache can serve it
                     sshagent(credentials: [SSH_CREDENTIALS_ID]) {
                         sh """
                             # Set proper ownership and permissions for Apache to serve the file
@@ -68,6 +71,20 @@ pipeline {
 
                             # Debug: Check if Apache is running
                             ssh azureuser@$AZURE_SERVER_IP 'sudo systemctl status apache2'
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Clear Apache Cache') {
+            steps {
+                script {
+                    // Clear Apache cache to ensure the latest file is served
+                    sshagent(credentials: [SSH_CREDENTIALS_ID]) {
+                        sh """
+                            # Clear Apache cache if any exists
+                            ssh azureuser@$AZURE_SERVER_IP 'sudo systemctl reload apache2'
                         """
                     }
                 }
