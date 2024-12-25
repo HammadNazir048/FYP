@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        APACHE_WEB_DIR = '/var/www/html/'   // Apache's document root
+        APACHE_WEB_DIR = '/var/www/html/'  // Apache's document root
         AZURE_SERVER_IP = '20.118.206.34'  // Apache server IP
         SSH_CREDENTIALS_ID = 'azure-ssh-key'  // Replace with your Jenkins SSH credentials ID
         LOCAL_HTML_FILE = 'index.html'  // Path to your local HTML file
@@ -25,35 +25,17 @@ pipeline {
                     echo 'Contents of index.html:'
                     sh 'cat index.html'
 
-                    // Debug: Check current working directory to ensure correct file is being copied
-                    echo "Current working directory: ${pwd()}"
-
-                    // Copy index.html to the Apache server
+                    // Copy index.html to the Apache server using SSH key
                     sshagent(credentials: [SSH_CREDENTIALS_ID]) {
                         sh """
-                            # Verify the remote Apache directory and check if it's correct
+                            # Debug: Verify the remote Apache directory
                             ssh azureuser@$AZURE_SERVER_IP 'echo "Remote Apache directory: $APACHE_WEB_DIR"'
 
                             # Copy index.html to Apache server
                             scp $LOCAL_HTML_FILE azureuser@$AZURE_SERVER_IP:$APACHE_WEB_DIR
 
-                            # List files in the Apache directory to confirm the file copy
+                            # Debug: List files in the Apache directory to confirm the file copy
                             ssh azureuser@$AZURE_SERVER_IP 'ls -l $APACHE_WEB_DIR'
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Set Permissions') {
-            steps {
-                script {
-                    // Set correct permissions on the index.html file to ensure Apache can serve it
-                    sshagent(credentials: [SSH_CREDENTIALS_ID]) {
-                        sh """
-                            # Set proper ownership and permissions for Apache to serve the file
-                            ssh azureuser@$AZURE_SERVER_IP 'sudo chown www-data:www-data $APACHE_WEB_DIR/index.html'
-                            ssh azureuser@$AZURE_SERVER_IP 'sudo chmod 644 $APACHE_WEB_DIR/index.html'
                         """
                     }
                 }
@@ -71,20 +53,6 @@ pipeline {
 
                             # Debug: Check if Apache is running
                             ssh azureuser@$AZURE_SERVER_IP 'sudo systemctl status apache2'
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Clear Apache Cache') {
-            steps {
-                script {
-                    // Clear Apache cache to ensure the latest file is served
-                    sshagent(credentials: [SSH_CREDENTIALS_ID]) {
-                        sh """
-                            # Clear Apache cache if any exists
-                            ssh azureuser@$AZURE_SERVER_IP 'sudo systemctl reload apache2'
                         """
                     }
                 }
