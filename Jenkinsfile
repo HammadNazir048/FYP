@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        APACHE_WEB_DIR = '/var/www/html/'  // Apache's document root
+        APACHE_WEB_DIR = '/var/www/html/'   // Apache's document root
         AZURE_SERVER_IP = '20.118.206.34'  // Apache server IP
         SSH_CREDENTIALS_ID = 'azure-ssh-key'  // Replace with your Jenkins SSH credentials ID
         LOCAL_HTML_FILE = 'index.html'  // Path to your local HTML file
@@ -36,6 +36,21 @@ pipeline {
 
                             # Debug: List files in the Apache directory to confirm the file copy
                             ssh azureuser@$AZURE_SERVER_IP 'ls -l $APACHE_WEB_DIR'
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Set Permissions') {
+            steps {
+                script {
+                    // Set correct permissions on the index.html file
+                    sshagent(credentials: [SSH_CREDENTIALS_ID]) {
+                        sh """
+                            # Set proper ownership and permissions for Apache to serve the file
+                            ssh azureuser@$AZURE_SERVER_IP 'sudo chown www-data:www-data $APACHE_WEB_DIR/index.html'
+                            ssh azureuser@$AZURE_SERVER_IP 'sudo chmod 644 $APACHE_WEB_DIR/index.html'
                         """
                     }
                 }
