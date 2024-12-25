@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        // Define the directory where Apache serves the files on the Azure server
+        // Apache web directory on the Azure server
         APACHE_WEB_DIR = '/var/www/html/'  // Update if your Apache config differs
-        AZURE_SERVER_IP = '20.118.206.34'
+        AZURE_SERVER_IP = 'your-azure-server-ip'
         SSH_CREDENTIALS_ID = 'azure-ssh-key'  // The ID of your stored SSH key in Jenkins
         LOCAL_HTML_FILE = 'index.html'  // Path to your local HTML file
     }
@@ -22,10 +22,20 @@ pipeline {
         stage('Deploy HTML to Apache') {
             steps {
                 script {
+                    // Debug: Print the contents of the HTML file before deploying
+                    sh 'cat index.html'
+
                     // Use SSH credentials to copy the HTML file to the Apache server on Azure
                     sshagent(credentials: [SSH_CREDENTIALS_ID]) {
                         sh """
+                            # Debug: Print the remote Apache directory
+                            ssh azureuser@$AZURE_SERVER_IP 'echo "Remote Apache directory: $APACHE_WEB_DIR"'
+
+                            # Copy index.html to the remote server
                             scp $LOCAL_HTML_FILE azureuser@$AZURE_SERVER_IP:$APACHE_WEB_DIR
+
+                            # Debug: List files in the remote Apache directory to confirm the copy
+                            ssh azureuser@$AZURE_SERVER_IP 'ls -l $APACHE_WEB_DIR'
                         """
                     }
                 }
